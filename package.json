@@ -1,0 +1,12 @@
+{
+  "name": "e-nilai",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "seed": "node scripts/seed-supabase.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "dotenv": "^16.0.0"
+  }
+}
