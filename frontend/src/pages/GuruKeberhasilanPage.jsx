@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { gunaAuth } from "../lib/AuthContext";
 
 const STATUS = {
   DRAFT: "draft",
@@ -29,8 +30,8 @@ const EMPTY_ITEM = (bil = 1) => ({
 });
 
 export default function GuruKeberhasilanPage() {
-  // TODO: ganti dengan auth sebenar
-  const [guruId] = useState("41451b11-c146-4912-9911-685445164c19");
+  const { pengguna } = gunaAuth();
+  const guruId = pengguna?.id;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,11 +56,14 @@ export default function GuruKeberhasilanPage() {
   const [tarikhPenilaian2, setTarikhPenilaian2] = useState(null);
 
   useEffect(() => {
-    initData();
+    if (guruId) {
+      initData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [guruId]);
 
   async function initData() {
+    if (!guruId) return;
     setLoading(true);
     setMsg("");
     try {

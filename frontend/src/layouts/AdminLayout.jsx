@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 export default function AdminLayout() {
   return (
@@ -11,8 +12,11 @@ export default function AdminLayout() {
           <Link to="/admin/keberhasilan" style={{ color: "white" }}>Keberhasilan</Link>
         </div>
       </aside>
-      <main style={{ flex: 1, padding: 20 }}>
-        <Outlet />
+      <main style={{ flex: 1 }}>
+        <Navbar />
+        <div style={{ padding: 20 }}>
+          <Outlet />
+        </div>
       </main>
     </div>
   );
