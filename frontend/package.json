@@ -1,1 +1,22 @@
-{\n  "name": "frontend",\n  "version": "1.0.0",\n  "private": true,\n  "dependencies": {\n    "react": "^17.0.0",\n    "react-router-dom": "^5.0.0",\n    "axios": "^0.21.0",\n    "jspdf": "^2.3.1",\n    "xlsx": "^0.17.5",\n    "tailwindcss": "^2.0"\n  }\n}
+{
+  "name": "frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
+  }
+}
