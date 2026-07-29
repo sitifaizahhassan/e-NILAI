@@ -1,0 +1,16 @@
+{
+  "name": "e-nilai",
+  "version": "1.0.0",
+  "description": "Teacher evaluation dashboard",
+  "main": "scripts/seed-supabase.js",
+  "scripts": {
+    "seed": "node scripts/seed-supabase.js",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "devDependencies": {}
+}

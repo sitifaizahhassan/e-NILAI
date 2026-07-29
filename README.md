@@ -1,38 +1,15 @@
-attendance-system-my/
-├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   │   └── supabase.js
-│   │   ├── routes/
-│   │   │   ├── auth.js
-│   │   │   ├── students.js
-│   │   │   ├── attendance.js
-│   │   │   └── reports.js
-│   │   ├── middleware/
-│   │   │   └── auth.js
-│   │   └── index.js
-│   ├── .env.example
-│   ├── package.json
-│   └── README.md
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── LoginForm.jsx
-│   │   │   ├── AttendanceForm.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   └── ReportViewer.jsx
-│   │   ├── pages/
-│   │   │   ├── Login.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   └── Reports.jsx
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── App.jsx
-│   │   └── index.css
-│   ├── .env.example
-│   ├── package.json
-│   └── README.md
-├── database/
-│   └── schema.sql
-├── .gitignore
-└── README.md
+# e-NILAI - Teacher Evaluation Dashboard
+
+A comprehensive teacher evaluation dashboard built with Supabase, Vue.js, and Node.js.
+
+## Project Structure
+
+- **backend/** - Node.js backend server
+- **frontend/** - Vue.js frontend application
+- **scripts/** - Utility scripts (seed database, etc.)
+
+## Setup Instructions
+
+1. **Install Dependencies**
+   ```bash
+   npm run install:all
