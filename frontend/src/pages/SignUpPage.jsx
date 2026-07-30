@@ -2,22 +2,33 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setErrorMsg("");
+    setSuccessMsg("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (password !== confirmPassword) {
+      setErrorMsg("Kata laluan tidak sepadan. Sila semak semula.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMsg("Kata laluan mestilah sekurang-kurangnya 6 aksara.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       setErrorMsg(error.message);
@@ -25,30 +36,18 @@ export default function LoginPage() {
       return;
     }
 
-    const userId = data.user.id;
-
-    const { data: profile, error: pErr } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (pErr || !profile) {
-      setErrorMsg("Profil pengguna tidak dijumpai. Sila hubungi admin.");
-      setLoading(false);
-      return;
-    }
-
-    if (profile.role === "admin") navigate("/admin");
-    else navigate("/guru");
-
+    setSuccessMsg(
+      "Akaun berjaya didaftarkan! Sila semak e-mel anda untuk pengesahan, kemudian log masuk."
+    );
     setLoading(false);
+
+    setTimeout(() => navigate("/login"), 3000);
   };
 
   return (
     <div style={styles.wrap}>
-      <form style={styles.card} onSubmit={handleLogin}>
-        <h2 style={{ marginTop: 0 }}>Login e-Nilai</h2>
+      <form style={styles.card} onSubmit={handleSignUp}>
+        <h2 style={{ marginTop: 0 }}>Daftar Akaun e-Nilai</h2>
 
         <label>Email</label>
         <input
@@ -68,16 +67,26 @@ export default function LoginPage() {
           required
         />
 
+        <label>Sahkan Kata Laluan</label>
+        <input
+          style={styles.input}
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+
         <button style={styles.btn} type="submit" disabled={loading}>
-          {loading ? "Loading..." : "Login"}
+          {loading ? "Mendaftar..." : "Daftar"}
         </button>
 
-        {errorMsg && <p style={{ color: "crimson" }}>{errorMsg}</p>}
+        {errorMsg && <p style={{ color: "crimson", margin: 0 }}>{errorMsg}</p>}
+        {successMsg && <p style={{ color: "green", margin: 0 }}>{successMsg}</p>}
 
         <p style={{ margin: 0, textAlign: "center" }}>
-          Belum ada akaun?{" "}
-          <Link to="/signup" style={{ color: "#1d4ed8" }}>
-            Daftar di sini
+          Sudah ada akaun?{" "}
+          <Link to="/login" style={{ color: "#1d4ed8" }}>
+            Log Masuk
           </Link>
         </p>
       </form>
