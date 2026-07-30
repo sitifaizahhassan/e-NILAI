@@ -6,11 +6,15 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminKeberhasilanPage from "./pages/AdminKeberhasilanPage";
 import GuruKeberhasilanPage from "./pages/GuruKeberhasilanPage";
 import KeberhasilanPrintablePage from "./pages/KeberhasilanPrintablePage";
+import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/admin" replace />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
 
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboardPage />} />
