@@ -1,1 +1,18 @@
-{\n  \"name\": \"backend\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Backend dependencies\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"test\": \"echo 'Error: no test specified' && exit 1\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.17.1\",\n    \"supabase\": \"^2.0.0\",\n    \"cors\": \"^2.8.5\",\n    \"dotenv\": \"^10.0.0\",\n    \"jsonwebtoken\": \"^8.5.1\",\n    \"bcryptjs\": \"^2.4.3\",\n    \"xlsx\": \"^0.17.1\"\n  }\n}
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend dependencies",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'Error: no test specified' && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "supabase": "^2.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "bcryptjs": "^2.4.3",
+    "xlsx": "^0.17.1"
+  }
+}
