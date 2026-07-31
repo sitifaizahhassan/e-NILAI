@@ -305,8 +305,8 @@ export default function GuruKeberhasilanPage() {
   async function hantarPenilaianAkhir() {
     if (!formId || saving) return;
 
-    if (status !== STATUS.DINILAI_1 && status !== STATUS.DIHANTAR_2) {
-      setMsg("Penilaian akhir hanya boleh dihantar selepas dinilai_1.");
+    if (status === STATUS.DRAFT) {
+      setMsg("Sila hantar Penilaian Pertama dahulu sebelum menghantar Penilaian Kedua.");
       return;
     }
 
@@ -431,6 +431,17 @@ export default function GuruKeberhasilanPage() {
 
   const allEvidensUploaded = items.length > 0 && items.every((it) => !!it.evidens_url);
 
+  const penilaianPertamaBelumDihantar = status === STATUS.DRAFT;
+  const butangKeduaDisabled = penilaianPertamaBelumDihantar || !allEvidensUploaded;
+  let msgButangKedua = "";
+  if (penilaianPertamaBelumDihantar && !allEvidensUploaded) {
+    msgButangKedua = "Sila hantar Penilaian Pertama dahulu dan muat naik evidens untuk semua item.";
+  } else if (penilaianPertamaBelumDihantar) {
+    msgButangKedua = "Sila hantar Penilaian Pertama dahulu.";
+  } else if (!allEvidensUploaded) {
+    msgButangKedua = "Sila muat naik evidens untuk semua item sebelum menghantar.";
+  }
+
   const readOnlyP1 = status !== STATUS.DRAFT;
   const readOnlyAkhir = status !== STATUS.DINILAI_1 && status !== STATUS.DIHANTAR_2;
 
@@ -510,13 +521,12 @@ export default function GuruKeberhasilanPage() {
               <col style={{ width: "200px" }} />
               <col style={{ width: "220px" }} />
               <col style={{ width: "140px" }} />
-              <col style={{ width: "180px" }} />
               <col style={{ width: "140px" }} />
               <col style={{ width: "160px" }} />
               <col style={{ width: "220px" }} />
               <col style={{ width: "140px" }} />
               <col style={{ width: "170px" }} />
-              <col style={{ width: "90px" }} />
+              <col style={{ width: "180px" }} />
             </colgroup>
             <thead>
               <tr>
@@ -525,12 +535,12 @@ export default function GuruKeberhasilanPage() {
                 <th style={thStyle}>SASARAN KEBERHASILAN</th>
                 <th style={thStyle}>PENCAPAIAN SEMASA PENILAIAN PERTAMA</th>
                 <th style={thStyle}>PENILAIAN PERTAMA</th>
-                <th style={thStyle}>EVIDENS</th>
                 <th style={thStyle}>STATUS SASARAN</th>
                 <th style={thStyle}>PENCAPAIAN SEMASA PENILAIAN AKHIR</th>
                 <th style={thStyle}>PENILAIAN AKHIR</th>
                 <th style={thStyle}>CATATAN</th>
                 <th style={thStyle}>TINDAKAN</th>
+                <th style={thStyle}>EVIDENS</th>
               </tr>
             </thead>
             <tbody>
@@ -550,6 +560,24 @@ export default function GuruKeberhasilanPage() {
                   </td>
                   <td style={tdStyle}>
                     <input type="number" step="0.01" style={inputCellSm} value={it.penilaian_pertama ?? ""} onChange={(e) => updateItem(i, "penilaian_pertama", e.target.value)} disabled={readOnlyP1} />
+                  </td>
+                  <td style={tdStyle}>
+                    <select style={inputCell} value={it.status_sasaran || ""} onChange={(e) => updateItem(i, "status_sasaran", e.target.value)} disabled={readOnlyP1}>
+                      <option value="">-- Pilih --</option>
+                      {STATUS_SASARAN_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </td>
+                  <td style={tdStyle}>
+                    <textarea style={textCell} value={it.pencapaian_akhir || ""} onChange={(e) => updateItem(i, "pencapaian_akhir", e.target.value)} disabled={readOnlyAkhir} />
+                  </td>
+                  <td style={tdStyle}>
+                    <input type="number" step="0.01" style={inputCellSm} value={it.penilaian_akhir ?? ""} onChange={(e) => updateItem(i, "penilaian_akhir", e.target.value)} disabled={readOnlyAkhir} />
+                  </td>
+                  <td style={tdStyle}>
+                    <textarea style={textCell} value={it.catatan || ""} onChange={(e) => updateItem(i, "catatan", e.target.value)} disabled={readOnlyAkhir} />
+                  </td>
+                  <td style={tdStyle}>
+                    <button type="button" onClick={() => removeItem(i)} disabled={status !== STATUS.DRAFT}>Buang</button>
                   </td>
                   <td style={tdStyle}>
                     {it.evidens_url ? (
@@ -596,24 +624,6 @@ export default function GuruKeberhasilanPage() {
                       </label>
                     )}
                   </td>
-                  <td style={tdStyle}>
-                    <select style={inputCell} value={it.status_sasaran || ""} onChange={(e) => updateItem(i, "status_sasaran", e.target.value)} disabled={readOnlyP1}>
-                      <option value="">-- Pilih --</option>
-                      {STATUS_SASARAN_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                  </td>
-                  <td style={tdStyle}>
-                    <textarea style={textCell} value={it.pencapaian_akhir || ""} onChange={(e) => updateItem(i, "pencapaian_akhir", e.target.value)} disabled={readOnlyAkhir} />
-                  </td>
-                  <td style={tdStyle}>
-                    <input type="number" step="0.01" style={inputCellSm} value={it.penilaian_akhir ?? ""} onChange={(e) => updateItem(i, "penilaian_akhir", e.target.value)} disabled={readOnlyAkhir} />
-                  </td>
-                  <td style={tdStyle}>
-                    <textarea style={textCell} value={it.catatan || ""} onChange={(e) => updateItem(i, "catatan", e.target.value)} disabled={readOnlyAkhir} />
-                  </td>
-                  <td style={tdStyle}>
-                    <button type="button" onClick={() => removeItem(i)} disabled={status !== STATUS.DRAFT}>Buang</button>
-                  </td>
                 </tr>
               ))}
               {items.length === 0 && (
@@ -654,33 +664,18 @@ export default function GuruKeberhasilanPage() {
           </button>
         )}
 
-        {(status === STATUS.DINILAI_1 || status === STATUS.DIHANTAR_2) && (
-          <button
-            onClick={hantarPenilaianAkhir}
-            disabled={saving || !allEvidensUploaded}
-            title={!allEvidensUploaded ? "Sila muat naik evidens untuk semua item sebelum menghantar" : ""}
-          >
-            Hantar Penilaian Kedua
-          </button>
-        )}
-        {(status === STATUS.DINILAI_1 || status === STATUS.DIHANTAR_2) && !allEvidensUploaded && (
+        <button
+          onClick={hantarPenilaianAkhir}
+          disabled={saving || butangKeduaDisabled}
+          title={msgButangKedua}
+        >
+          Hantar Penilaian Kedua
+        </button>
+        {msgButangKedua && (
           <span style={{ alignSelf: "center", fontSize: 12, color: "#dc2626" }}>
-            Sila muat naik evidens untuk semua item sebelum menghantar
+            {msgButangKedua}
           </span>
         )}
-
-<button
-  onClick={() => {
-    const url = `/guru/keberhasilan/print/${formId}`;
-    const w = window.open(url, "_blank", "noopener,noreferrer");
-    if (!w) {
-      window.location.href = url; // fallback kalau popup block
-    }
-  }}
-  disabled={!formId}
->
-  Download Borang
-</button>
 
       </div>
 
@@ -724,7 +719,7 @@ const grid2 = {
 const tableStyle = {
   width: "100%",
   borderCollapse: "collapse",
-  minWidth: 1870,
+  minWidth: 1880,
   tableLayout: "fixed",
 };
 
