@@ -47,13 +47,20 @@ export default function LoginPage() {
 
   return (
     <div style={styles.page}>
-      {/* Hero/Banner side */}
+      {/* Hero/Banner side - BLUE GRADIENT + e-NILAI TEXT */}
       <div style={styles.banner}>
-        <img
-          src="/assets/banner.svg"
-          alt="e-NILAI – Sistem Penilaian Guru Bersepadu"
-          style={styles.bannerImg}
-        />
+        <div style={styles.bannerContent}>
+          <div style={styles.bannerLogo}>
+            <div style={styles.bannerLogoCircle}>📊</div>
+          </div>
+          <h1 style={styles.bannerTitle}>e-NILAI</h1>
+          <p style={styles.bannerSubtitle}>Sistem Penilaian Guru Bersepadu</p>
+          <div style={styles.bannerDecoration}>
+            <div style={styles.dot}></div>
+            <div style={styles.dot}></div>
+            <div style={styles.dot}></div>
+          </div>
+        </div>
       </div>
 
       {/* Login form side */}
@@ -113,13 +120,58 @@ const styles = {
   banner: {
     flex: 1,
     display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     background: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%)",
     overflow: "hidden",
+    position: "relative",
   },
-  bannerImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
+  bannerContent: {
+    textAlign: "center",
+    zIndex: 1,
+  },
+  bannerLogo: {
+    marginBottom: 24,
+  },
+  bannerLogoCircle: {
+    width: 120,
+    height: 120,
+    margin: "0 auto",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.15)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 56,
+    backdropFilter: "blur(10px)",
+    border: "2px solid rgba(255,255,255,0.2)",
+  },
+  bannerTitle: {
+    fontSize: 72,
+    fontWeight: 900,
+    color: "white",
+    margin: 0,
+    letterSpacing: -2,
+    textShadow: "0 4px 12px rgba(0,0,0,0.3)",
+  },
+  bannerSubtitle: {
+    fontSize: 18,
+    color: "rgba(255,255,255,0.9)",
+    margin: "12px 0 0 0",
+    fontWeight: 400,
+    letterSpacing: 1,
+  },
+  bannerDecoration: {
+    display: "flex",
+    gap: 12,
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.4)",
   },
   formSide: {
     width: "100%",
