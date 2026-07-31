@@ -47,7 +47,7 @@ export default function SignUpPage() {
   return (
     <div style={styles.wrap}>
       <form style={styles.card} onSubmit={handleSignUp}>
-        <h2 style={{ marginTop: 0 }}>Daftar Akaun e-Nilai</h2>
+        <h2 style={{ marginTop: 0 }}>Daftar Akaun e-NILAI</h2>
 
         <label>Email</label>
         <input
