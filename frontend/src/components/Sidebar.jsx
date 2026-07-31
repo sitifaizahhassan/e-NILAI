@@ -12,7 +12,11 @@ export default function Sidebar() {
 
   return (
     <aside style={styles.sidebar}>
-      <h2 style={styles.logo}>e-Nilai</h2>
+      {/* TODO: ganti dengan fail logo rasmi apabila disediakan */}
+      <div style={styles.logoRow}>
+        <div style={styles.logoIcon}>e</div>
+        <h2 style={styles.logo}>e-NILAI</h2>
+      </div>
       <nav style={styles.nav}>
         {menus.map((m) => (
           <NavLink
@@ -34,7 +38,21 @@ export default function Sidebar() {
 
 const styles = {
   sidebar: { width: 220, background: "#111827", color: "white", padding: "24px 16px" },
-  logo: { margin: "0 0 24px 0", fontSize: 24 },
+  logoRow: { display: "flex", alignItems: "center", gap: 8, marginBottom: 24 },
+  logoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #1e3a8a, #3b82f6)",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 800,
+    fontSize: 15,
+    flexShrink: 0,
+  },
+  logo: { margin: 0, fontSize: 20, fontWeight: 700 },
   nav: { display: "flex", flexDirection: "column", gap: 10 },
   navItem: { textDecoration: "none", padding: "8px 10px", borderRadius: 8 },
 };

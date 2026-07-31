@@ -47,8 +47,9 @@ export default function GuruLayout() {
       {/* Sidebar */}
       <aside style={{ ...s.sidebar, left: sidebarOpen ? 0 : undefined }}>
         <div style={s.sidebarTop}>
+          {/* TODO: ganti dengan fail logo rasmi apabila disediakan */}
           <div style={s.logo}>
-            <span style={s.logoIcon}>📊</span>
+            <div style={s.logoIcon}>e</div>
             <span>e-NILAI</span>
           </div>
           <button
@@ -169,7 +170,17 @@ const s = {
     color: "#fff",
   },
   logoIcon: {
-    fontSize: 24,
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #1e3a8a, #3b82f6)",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 800,
+    fontSize: 15,
+    flexShrink: 0,
   },
   closeMobile: {
     display: "none",
