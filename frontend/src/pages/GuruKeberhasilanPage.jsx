@@ -26,11 +26,14 @@ const EMPTY_ITEM = (bil = 1) => ({
   pencapaian_akhir: "",
   penilaian_akhir: "",
   catatan: "",
+  evidens_url: "",
+  evidens_path: "",
 });
 
 export default function GuruKeberhasilanPage() {
   // TODO: ganti dengan auth sebenar
   const [guruId] = useState("41451b11-c146-4912-9911-685445164c19");
+  const [uploadingIndex, setUploadingIndex] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -135,6 +138,8 @@ export default function GuruKeberhasilanPage() {
             pencapaian_akhir: r.pencapaian_akhir || "",
             penilaian_akhir: r.penilaian_akhir ?? "",
             catatan: r.catatan || "",
+            evidens_url: r.evidens_url || "",
+            evidens_path: r.evidens_path || "",
           }))
         );
       }
@@ -209,6 +214,8 @@ export default function GuruKeberhasilanPage() {
         pencapaian_akhir: row.pencapaian_akhir,
         penilaian_akhir: toNumberOrNull(row.penilaian_akhir),
         catatan: row.catatan,
+        evidens_url: row.evidens_url || null,
+        evidens_path: row.evidens_path || null,
       };
 
       if (row.id) {
@@ -348,6 +355,82 @@ export default function GuruKeberhasilanPage() {
     await upsertItems(formId);
   }
 
+  async function uploadEvidens(index, file) {
+    if (!file || uploadingIndex !== null) return;
+    setUploadingIndex(index);
+    setMsg("");
+    try {
+      const item = items[index];
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `${guruId}/${formId}-bil${item.bil ?? index + 1}-${timestamp}-${safeName}`;
+
+      // Padam fail lama jika ada
+      if (item.evidens_path) {
+        await supabase.storage.from("evidens-keberhasilan").remove([item.evidens_path]);
+      }
+
+      const { error: uploadErr } = await supabase.storage
+        .from("evidens-keberhasilan")
+        .upload(filePath, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const { data: urlData } = supabase.storage
+        .from("evidens-keberhasilan")
+        .getPublicUrl(filePath);
+      const publicUrl = urlData?.publicUrl || "";
+
+      // Kemas kini state
+      const updatedItems = items.map((it, i) =>
+        i === index ? { ...it, evidens_url: publicUrl, evidens_path: filePath } : it
+      );
+      setItems(updatedItems);
+
+      // Simpan ke DB jika item sudah ada ID
+      if (item.id) {
+        const { error: dbErr } = await supabase
+          .from("keberhasilan_items")
+          .update({ evidens_url: publicUrl, evidens_path: filePath })
+          .eq("id", item.id);
+        if (dbErr) throw dbErr;
+      }
+      setMsg("Evidens berjaya dimuat naik ✅");
+    } catch (e) {
+      console.error(e);
+      setMsg("Ralat muat naik evidens: " + e.message);
+    } finally {
+      setUploadingIndex(null);
+    }
+  }
+
+  async function removeEvidens(index) {
+    const item = items[index];
+    if (!item.evidens_path && !item.evidens_url) return;
+    setMsg("");
+    try {
+      if (item.evidens_path) {
+        await supabase.storage.from("evidens-keberhasilan").remove([item.evidens_path]);
+      }
+      const updatedItems = items.map((it, i) =>
+        i === index ? { ...it, evidens_url: "", evidens_path: "" } : it
+      );
+      setItems(updatedItems);
+      if (item.id) {
+        const { error: dbErr } = await supabase
+          .from("keberhasilan_items")
+          .update({ evidens_url: null, evidens_path: null })
+          .eq("id", item.id);
+        if (dbErr) throw dbErr;
+      }
+      setMsg("Evidens berjaya dibuang ✅");
+    } catch (e) {
+      console.error(e);
+      setMsg("Ralat buang evidens: " + e.message);
+    }
+  }
+
+  const allEvidensUploaded = items.length > 0 && items.every((it) => !!it.evidens_url);
+
   const readOnlyP1 = status !== STATUS.DRAFT;
   const readOnlyAkhir = status !== STATUS.DINILAI_1 && status !== STATUS.DIHANTAR_2;
 
@@ -419,13 +502,15 @@ export default function GuruKeberhasilanPage() {
           <button type="button" onClick={addItem} disabled={status !== STATUS.DRAFT}>+ Tambah Item</button>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: "auto", width: "100%" }}>
           <table style={tableStyle}>
             <colgroup>
               <col style={{ width: "70px" }} />
               <col style={{ width: "240px" }} />
               <col style={{ width: "200px" }} />
               <col style={{ width: "220px" }} />
+              <col style={{ width: "140px" }} />
+              <col style={{ width: "180px" }} />
               <col style={{ width: "140px" }} />
               <col style={{ width: "160px" }} />
               <col style={{ width: "220px" }} />
@@ -440,6 +525,7 @@ export default function GuruKeberhasilanPage() {
                 <th style={thStyle}>SASARAN KEBERHASILAN</th>
                 <th style={thStyle}>PENCAPAIAN SEMASA PENILAIAN PERTAMA</th>
                 <th style={thStyle}>PENILAIAN PERTAMA</th>
+                <th style={thStyle}>EVIDENS</th>
                 <th style={thStyle}>STATUS SASARAN</th>
                 <th style={thStyle}>PENCAPAIAN SEMASA PENILAIAN AKHIR</th>
                 <th style={thStyle}>PENILAIAN AKHIR</th>
@@ -466,6 +552,51 @@ export default function GuruKeberhasilanPage() {
                     <input type="number" step="0.01" style={inputCellSm} value={it.penilaian_pertama ?? ""} onChange={(e) => updateItem(i, "penilaian_pertama", e.target.value)} disabled={readOnlyP1} />
                   </td>
                   <td style={tdStyle}>
+                    {it.evidens_url ? (
+                      <div style={{ fontSize: 12 }}>
+                        <a href={it.evidens_url} target="_blank" rel="noopener noreferrer" style={{ wordBreak: "break-all", color: "#2563eb" }}>
+                          {it.evidens_path ? it.evidens_path.split("/").pop() : "Lihat Fail"}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeEvidens(i)}
+                          disabled={uploadingIndex !== null}
+                          style={{ marginTop: 4, display: "block", fontSize: 11, color: "#dc2626", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                        >
+                          Buang
+                        </button>
+                      </div>
+                    ) : (
+                      <label style={{ cursor: "pointer" }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "5px 10px",
+                            background: uploadingIndex === i ? "#e5e7eb" : "#2563eb",
+                            color: uploadingIndex === i ? "#6b7280" : "#fff",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: uploadingIndex === i ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          {uploadingIndex === i ? "Memuat naik..." : "Muat Naik"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="*"
+                          style={{ display: "none" }}
+                          disabled={uploadingIndex !== null}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) uploadEvidens(i, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    )}
+                  </td>
+                  <td style={tdStyle}>
                     <select style={inputCell} value={it.status_sasaran || ""} onChange={(e) => updateItem(i, "status_sasaran", e.target.value)} disabled={readOnlyP1}>
                       <option value="">-- Pilih --</option>
                       {STATUS_SASARAN_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -487,7 +618,7 @@ export default function GuruKeberhasilanPage() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td style={tdStyle} colSpan={10}>Tiada item.</td>
+                  <td style={tdStyle} colSpan={11}>Tiada item.</td>
                 </tr>
               )}
             </tbody>
@@ -524,9 +655,18 @@ export default function GuruKeberhasilanPage() {
         )}
 
         {(status === STATUS.DINILAI_1 || status === STATUS.DIHANTAR_2) && (
-          <button onClick={hantarPenilaianAkhir} disabled={saving}>
-            Hantar Penilaian Akhir
+          <button
+            onClick={hantarPenilaianAkhir}
+            disabled={saving || !allEvidensUploaded}
+            title={!allEvidensUploaded ? "Sila muat naik evidens untuk semua item sebelum menghantar" : ""}
+          >
+            Hantar Penilaian Kedua
           </button>
+        )}
+        {(status === STATUS.DINILAI_1 || status === STATUS.DIHANTAR_2) && !allEvidensUploaded && (
+          <span style={{ alignSelf: "center", fontSize: 12, color: "#dc2626" }}>
+            Sila muat naik evidens untuk semua item sebelum menghantar
+          </span>
         )}
 
 <button
@@ -542,7 +682,6 @@ export default function GuruKeberhasilanPage() {
   Download Borang
 </button>
 
-        <button onClick={() => window.print()}>Cetak (Page Semasa)</button>
       </div>
 
       {msg && <p style={{ marginTop: 12 }}>{msg}</p>}
@@ -585,7 +724,7 @@ const grid2 = {
 const tableStyle = {
   width: "100%",
   borderCollapse: "collapse",
-  minWidth: 1700,
+  minWidth: 1870,
   tableLayout: "fixed",
 };
 
