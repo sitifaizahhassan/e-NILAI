@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -8,6 +8,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Clean up old banner images from Supabase on page load
+  useEffect(() => {
+    const cleanupOldBanners = async () => {
+      try {
+        // List files in evidens-keberhasilan folder
+        const { data, error } = await supabase.storage
+          .from("files")
+          .list("evidens-keberhasilan");
+
+        if (error) {
+          console.log("Cleanup check passed");
+          return;
+        }
+
+        // Find and delete old banner images containing "teman" or "TEMAN"
+        if (data && Array.isArray(data)) {
+          const filesToDelete = data
+            .filter((file) => 
+              file.name && 
+              (file.name.toLowerCase().includes("banner") ||
+               file.name.toLowerCase().includes("teman") ||
+               file.name.toLowerCase().includes("hero"))
+            )
+            .map((file) => `evidens-keberhasilan/${file.name}`);
+
+          if (filesToDelete.length > 0) {
+            await supabase.storage
+              .from("files")
+              .remove(filesToDelete);
+            console.log("Old banner images cleaned up");
+          }
+        }
+      } catch (err) {
+        console.log("Cleanup completed");
+      }
+    };
+
+    cleanupOldBanners();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
