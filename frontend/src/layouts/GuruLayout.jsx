@@ -42,6 +42,21 @@ export default function GuruLayout() {
     navigate("/login");
   };
 
+  const role = profile?.role || "guru";
+  const isPentadbirOrAdmin = role === "pentadbir" || role === "admin";
+  const isAdmin = role === "admin";
+  const adminNavItems = [
+    ...(isPentadbirOrAdmin ? [] : []),
+    ...(isAdmin ? [{ to: "/admin/pengguna", label: "👥 Urus Pengguna" }] : []),
+  ];
+
+  const getNavLinkStyle = (isActive) => ({
+    ...s.navItem,
+    background: isActive ? "rgba(96,165,250,0.2)" : "transparent",
+    color: isActive ? "#93c5fd" : "#d1d5db",
+    fontWeight: isActive ? 700 : 400,
+  });
+
   return (
     <div style={s.root}>
       {/* Sidebar */}
@@ -82,17 +97,32 @@ export default function GuruLayout() {
                 key={item.to}
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
-                style={{
-                  ...s.navItem,
-                  background: isActive ? "rgba(96,165,250,0.2)" : "transparent",
-                  color: isActive ? "#93c5fd" : "#d1d5db",
-                  fontWeight: isActive ? 700 : 400,
-                }}
+                style={getNavLinkStyle(isActive)}
               >
                 {item.label}
               </NavLink>
             );
           })}
+
+          {adminNavItems.length > 0 && (
+            <>
+              <div style={s.adminDivider} />
+              <div style={s.adminLabel}>PENTADBIRAN</div>
+              {adminNavItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setSidebarOpen(false)}
+                    style={getNavLinkStyle(isActive)}
+                  >
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         <button style={s.logoutBtn} onClick={handleLogout}>
@@ -228,6 +258,17 @@ const s = {
     fontSize: 14,
     display: "block",
     transition: "background 0.15s, color 0.15s",
+  },
+  adminDivider: {
+    borderTop: "1px solid rgba(255,255,255,0.12)",
+    margin: "8px 2px 6px",
+  },
+  adminLabel: {
+    fontSize: 11,
+    letterSpacing: 0.8,
+    color: "#9ca3af",
+    fontWeight: 700,
+    padding: "2px 12px 8px",
   },
   logoutBtn: {
     margin: "8px 10px 16px",
