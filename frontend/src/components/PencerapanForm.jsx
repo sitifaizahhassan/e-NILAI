@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ASPEK_LIST, getAllItems, getTarafPdP } from "../data/tapakStandard4";
 
 const SCORE_LABELS = {
@@ -28,6 +28,26 @@ export default function PencerapanForm({
   msg,
   submittedAt,
   status,
+  // Kawalan akses mengikut peranan
+  canEditScores,
+  canUploadFiles,
+  canEditUlasan,
+  // Ulasan pentadbir (P1 & P2 sahaja)
+  showUlasan,
+  ulasan,
+  onUlasanChange,
+  // RPH
+  rphUrl,
+  rphPath,
+  uploadingRph,
+  onUploadRph,
+  onRemoveRph,
+  // BBM
+  bbmUrl,
+  bbmPath,
+  uploadingBbm,
+  onUploadBbm,
+  onRemoveBbm,
 }) {
   const [maklumat, setMaklumat] = useState(
     initialData?.maklumat || {
@@ -41,8 +61,30 @@ export default function PencerapanForm({
   const [catatan, setCatatan] = useState(initialData?.catatan || "");
   const [expandedRubrik, setExpandedRubrik] = useState({});
 
+  // Kemas kini state apabila initialData berubah (cth: admin pilih guru lain)
+  useEffect(() => {
+    if (initialData) {
+      setMaklumat(initialData.maklumat || {
+        mata_pelajaran: "",
+        kelas: "",
+        tarikh_cerap: new Date().toISOString().slice(0, 10),
+        nama_sekolah: "",
+      });
+      setScores(initialData.scores || {});
+      setCatatan(initialData.catatan || "");
+    } else {
+      setMaklumat({ mata_pelajaran: "", kelas: "", tarikh_cerap: new Date().toISOString().slice(0, 10), nama_sekolah: "" });
+      setScores({});
+      setCatatan("");
+    }
+    setExpandedRubrik({});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.id]);
+
   const allItems = getAllItems();
-  const isReadOnly = status === "submitted";
+  // canEditScores prop mengatasi logik status "submitted" sedia ada
+  // Jika prop tidak dihantar, guna semakan status seperti biasa
+  const isReadOnly = canEditScores !== undefined ? !canEditScores : status === "submitted";
 
   // Calculate total weighted score
   function calcTotalScore() {
@@ -408,6 +450,108 @@ export default function PencerapanForm({
           disabled={isReadOnly}
         />
       </div>
+
+      {/* Muat Naik RPH */}
+      <div style={s.card}>
+        <h3 style={s.cardTitle}>📄 Muat Naik RPH (Rancangan Pengajaran Harian)</h3>
+        {rphUrl ? (
+          <div style={s.fileRow}>
+            <a href={rphUrl} target="_blank" rel="noopener noreferrer" style={s.fileLink}>
+              📎 {rphPath ? rphPath.split("/").pop() : "Lihat / Muat Turun RPH"}
+            </a>
+            {canUploadFiles && (
+              <button
+                type="button"
+                style={s.btnRemoveFile}
+                onClick={() => onRemoveRph && onRemoveRph()}
+                title="Buang RPH"
+              >
+                🗑️ Buang
+              </button>
+            )}
+          </div>
+        ) : canUploadFiles ? (
+          <div style={s.uploadRow}>
+            <label style={s.uploadLabel}>
+              <input
+                type="file"
+                accept="*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) { onUploadRph && onUploadRph(file); e.target.value = ""; }
+                }}
+                disabled={uploadingRph}
+              />
+              {uploadingRph ? "⏳ Memuat naik RPH..." : "⬆️ Pilih Fail RPH"}
+            </label>
+            <span style={s.uploadHint}>Semua jenis fail diterima</span>
+          </div>
+        ) : (
+          <p style={s.noFileText}>Tiada RPH dimuat naik.</p>
+        )}
+      </div>
+
+      {/* Muat Naik BBM */}
+      <div style={s.card}>
+        <h3 style={s.cardTitle}>🖼️ Muat Naik BBM (Bahan Bantu Mengajar)</h3>
+        {bbmUrl ? (
+          <div style={s.fileRow}>
+            <a href={bbmUrl} target="_blank" rel="noopener noreferrer" style={s.fileLink}>
+              📎 {bbmPath ? bbmPath.split("/").pop() : "Lihat / Muat Turun BBM"}
+            </a>
+            {canUploadFiles && (
+              <button
+                type="button"
+                style={s.btnRemoveFile}
+                onClick={() => onRemoveBbm && onRemoveBbm()}
+                title="Buang BBM"
+              >
+                🗑️ Buang
+              </button>
+            )}
+          </div>
+        ) : canUploadFiles ? (
+          <div style={s.uploadRow}>
+            <label style={s.uploadLabel}>
+              <input
+                type="file"
+                accept="*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) { onUploadBbm && onUploadBbm(file); e.target.value = ""; }
+                }}
+                disabled={uploadingBbm}
+              />
+              {uploadingBbm ? "⏳ Memuat naik BBM..." : "⬆️ Pilih Fail BBM"}
+            </label>
+            <span style={s.uploadHint}>Semua jenis fail diterima</span>
+          </div>
+        ) : (
+          <p style={s.noFileText}>Tiada BBM dimuat naik.</p>
+        )}
+      </div>
+
+      {/* Ulasan Pentadbir (P1 & P2 sahaja) */}
+      {showUlasan && (
+        <div style={s.card}>
+          <h3 style={s.cardTitle}>💬 Ulasan Pentadbir</h3>
+          {canEditUlasan ? (
+            <textarea
+              style={s.textarea}
+              rows={5}
+              value={ulasan || ""}
+              onChange={(e) => onUlasanChange && onUlasanChange(e.target.value)}
+              placeholder="Tuliskan ulasan pentadbir di sini..."
+            />
+          ) : (
+            <div style={s.ulasanReadOnly}>
+              {ulasan ? ulasan : <span style={{ color: "#9ca3af" }}>Tiada ulasan pentadbir.</span>}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Summary */}
       <div style={s.summaryCard}>
@@ -930,5 +1074,64 @@ const s = {
     fontSize: 13,
     color: "#d97706",
     textAlign: "center",
+  },
+  fileRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  fileLink: {
+    color: "#1d4ed8",
+    textDecoration: "underline",
+    fontSize: 14,
+    wordBreak: "break-all",
+  },
+  btnRemoveFile: {
+    border: "1px solid #fca5a5",
+    background: "#fff",
+    color: "#dc2626",
+    borderRadius: 6,
+    padding: "4px 10px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+  },
+  uploadRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  uploadLabel: {
+    display: "inline-block",
+    padding: "8px 18px",
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: 8,
+    color: "#1d4ed8",
+    fontWeight: 600,
+    fontSize: 14,
+    cursor: "pointer",
+  },
+  uploadHint: {
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  noFileText: {
+    fontSize: 14,
+    color: "#9ca3af",
+    margin: 0,
+  },
+  ulasanReadOnly: {
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: 8,
+    padding: "12px 14px",
+    fontSize: 14,
+    color: "#374151",
+    minHeight: 80,
+    whiteSpace: "pre-wrap",
+    lineHeight: 1.6,
   },
 };

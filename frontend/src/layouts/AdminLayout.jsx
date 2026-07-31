@@ -9,6 +9,7 @@ export default function AdminLayout() {
         <div style={{ display: "grid", gap: 8 }}>
           <Link to="/admin" style={{ color: "white" }}>Dashboard</Link>
           <Link to="/admin/keberhasilan" style={{ color: "white" }}>Keberhasilan</Link>
+          <Link to="/admin/pengguna" style={{ color: "white" }}>👥 Urus Pengguna</Link>
         </div>
       </aside>
       <main style={{ flex: 1, padding: 20 }}>

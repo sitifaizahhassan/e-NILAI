@@ -5,6 +5,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import GuruLayout from "./layouts/GuruLayout";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminKeberhasilanPage from "./pages/AdminKeberhasilanPage";
+import AdminUrusPenggunaPage from "./pages/AdminUrusPenggunaPage";
 import GuruDashboardPage from "./pages/GuruDashboardPage";
 import GuruProfilPage from "./pages/GuruProfilPage";
 import GuruKeberhasilanPage from "./pages/GuruKeberhasilanPage";
@@ -26,6 +27,7 @@ function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboardPage />} />
         <Route path="keberhasilan" element={<AdminKeberhasilanPage />} />
+        <Route path="pengguna" element={<AdminUrusPenggunaPage />} />
       </Route>
 
       {/* Print routes outside layout */}
