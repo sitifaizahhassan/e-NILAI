@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ASPEK_LIST, getAllItems, getTarafPdP } from "../data/tapakStandard4";
+import { kiraSkorBerwajaran } from "../lib/skorUtil";
 
 const SCORE_LABELS = {
   4: "4 – Cemerlang",
@@ -86,27 +87,9 @@ export default function PencerapanForm({
   // Jika prop tidak dihantar, guna semakan status seperti biasa
   const isReadOnly = canEditScores !== undefined ? !canEditScores : status === "submitted";
 
-  // Calculate total weighted score
+  // Calculate total weighted score using shared utility
   function calcTotalScore() {
-    let totalWeighted = 0;
-    ASPEK_LIST.forEach((aspek) => {
-      aspek.subAspek.forEach((sa) => {
-        const itemCount = sa.items.length;
-        if (itemCount === 0) return;
-        const maxPerItem = 4;
-        const maxSubAspekScore = itemCount * maxPerItem;
-
-        let rawScore = 0;
-        sa.items.forEach((item) => {
-          const s = scores[item.id];
-          if (s !== null && s !== undefined) rawScore += Number(s);
-        });
-
-        const subPct = maxSubAspekScore > 0 ? (rawScore / maxSubAspekScore) * 100 : 0;
-        totalWeighted += (subPct * sa.wajaran) / 100;
-      });
-    });
-    return totalWeighted;
+    return kiraSkorBerwajaran(scores);
   }
 
   const totalScore = calcTotalScore();

@@ -28,10 +28,10 @@ export default function GuruLayout() {
       if (!user) { navigate("/login"); return; }
       const { data } = await supabase
         .from("profiles")
-        .select("nama, email, jawatan, role")
+        .select("nama, jawatan, role")
         .eq("id", user.id)
         .maybeSingle();
-      setProfile(data || { email: user.email });
+      setProfile(data || {});
     } catch {
       // ignore
     }
@@ -41,6 +41,10 @@ export default function GuruLayout() {
     await supabase.auth.signOut();
     navigate("/login");
   };
+
+  const role = profile?.role;
+  const isPentadbirOrAdmin = role === "pentadbir" || role === "admin";
+  const isAdmin = role === "admin";
 
   return (
     <div style={s.root}>
@@ -63,10 +67,10 @@ export default function GuruLayout() {
         {profile && (
           <div style={s.profileMini}>
             <div style={s.profileAvatar}>
-              {(profile.nama || profile.email || "G").charAt(0).toUpperCase()}
+              {(profile.nama || "G").charAt(0).toUpperCase()}
             </div>
             <div>
-              <div style={s.profileName}>{profile.nama || profile.email}</div>
+              <div style={s.profileName}>{profile.nama || "-"}</div>
               <div style={s.profileRole}>{profile.jawatan || "Guru"}</div>
             </div>
           </div>
@@ -93,6 +97,39 @@ export default function GuruLayout() {
               </NavLink>
             );
           })}
+
+          {isPentadbirOrAdmin && (
+            <>
+              <div style={s.sectionDivider} />
+              <div style={s.sectionLabel}>PENTADBIRAN</div>
+              <NavLink
+                to="/admin/analisis"
+                onClick={() => setSidebarOpen(false)}
+                style={({ isActive }) => ({
+                  ...s.navItem,
+                  background: isActive ? "rgba(96,165,250,0.2)" : "transparent",
+                  color: isActive ? "#93c5fd" : "#d1d5db",
+                  fontWeight: isActive ? 700 : 400,
+                })}
+              >
+                📊 Analisis
+              </NavLink>
+              {isAdmin && (
+                <NavLink
+                  to="/admin/pengguna"
+                  onClick={() => setSidebarOpen(false)}
+                  style={({ isActive }) => ({
+                    ...s.navItem,
+                    background: isActive ? "rgba(96,165,250,0.2)" : "transparent",
+                    color: isActive ? "#93c5fd" : "#d1d5db",
+                    fontWeight: isActive ? 700 : 400,
+                  })}
+                >
+                  👥 Urus Pengguna
+                </NavLink>
+              )}
+            </>
+          )}
         </nav>
 
         <button style={s.logoutBtn} onClick={handleLogout}>
@@ -118,7 +155,7 @@ export default function GuruLayout() {
           </button>
           <span style={s.topbarTitle}>e-NILAI Guru</span>
           <div style={s.topbarRight}>
-            {profile?.nama || profile?.email || ""}
+            {profile?.nama || ""}
           </div>
         </header>
 
@@ -228,6 +265,18 @@ const s = {
     fontSize: 14,
     display: "block",
     transition: "background 0.15s, color 0.15s",
+  },
+  sectionDivider: {
+    borderTop: "1px solid rgba(255,255,255,0.1)",
+    margin: "10px 0 4px",
+  },
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#6b7280",
+    letterSpacing: 1.2,
+    padding: "0 12px 4px",
+    textTransform: "uppercase",
   },
   logoutBtn: {
     margin: "8px 10px 16px",
