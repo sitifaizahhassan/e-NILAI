@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useOutletContext } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { getWorkflowLabel, getWorkflowTone, getUserDisplayName } from "../lib/navigation";
 
 const STATUS = {
   DRAFT: "draft",
@@ -29,17 +31,14 @@ const EMPTY_ITEM = (bil = 1) => ({
 });
 
 export default function GuruKeberhasilanPage() {
-  // TODO: ganti dengan auth sebenar
-  const [guruId] = useState("41451b11-c146-4912-9911-685445164c19");
-
+  const location = useLocation();
+  const { user, profile } = useOutletContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-
   const [formId, setFormId] = useState(null);
   const [tahun] = useState(new Date().getFullYear());
   const [status, setStatus] = useState(STATUS.DRAFT);
-
   const [maklumat, setMaklumat] = useState({
     nama_pyd: "",
     no_kp: "",
@@ -47,17 +46,27 @@ export default function GuruKeberhasilanPage() {
     gred: "",
     tempat_bertugas: "",
   });
-
   const [items, setItems] = useState([EMPTY_ITEM(1), EMPTY_ITEM(2)]);
-
   const [tarikhPenetapan, setTarikhPenetapan] = useState(null);
   const [tarikhPenilaian1, setTarikhPenilaian1] = useState(null);
   const [tarikhPenilaian2, setTarikhPenilaian2] = useState(null);
 
   useEffect(() => {
-    initData();
+    if (user?.id) {
+      initData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
+
+  function getMaklumatSnapshot(formData = {}) {
+    return {
+      nama_pyd: formData.nama_pyd || getUserDisplayName(profile, user),
+      no_kp: formData.no_kp || profile?.no_kp || "",
+      jawatan: formData.jawatan || profile?.jawatan || "",
+      gred: formData.gred || profile?.gred || "",
+      tempat_bertugas: formData.tempat_bertugas || profile?.opsyen || "",
+    };
+  }
 
   async function initData() {
     setLoading(true);
@@ -66,23 +75,24 @@ export default function GuruKeberhasilanPage() {
       const { data: existing, error: findErr } = await supabase
         .from("keberhasilan_forms")
         .select("*")
-        .eq("guru_id", guruId)
+        .eq("guru_id", user.id)
         .eq("tahun", tahun)
         .maybeSingle();
 
       if (findErr) throw findErr;
 
       let currentForm = existing;
-
       if (!currentForm) {
         const today = new Date().toISOString().slice(0, 10);
+        const snapshot = getMaklumatSnapshot();
         const { data: created, error: createErr } = await supabase
           .from("keberhasilan_forms")
           .insert({
-            guru_id: guruId,
+            guru_id: user.id,
             tahun,
             status: STATUS.DRAFT,
             tarikh_penetapan: today,
+            ...snapshot,
           })
           .select()
           .single();
@@ -102,14 +112,7 @@ export default function GuruKeberhasilanPage() {
       setTarikhPenetapan(currentForm.tarikh_penetapan || null);
       setTarikhPenilaian1(currentForm.tarikh_penilaian_1 || null);
       setTarikhPenilaian2(currentForm.tarikh_penilaian_2 || null);
-
-      setMaklumat({
-        nama_pyd: currentForm.nama_pyd || "",
-        no_kp: currentForm.no_kp || "",
-        jawatan: currentForm.jawatan || "",
-        gred: currentForm.gred || "",
-        tempat_bertugas: currentForm.tempat_bertugas || "",
-      });
+      setMaklumat(getMaklumatSnapshot(currentForm));
 
       const { data: itemRows, error: itemErr } = await supabase
         .from("keberhasilan_items")
@@ -120,27 +123,25 @@ export default function GuruKeberhasilanPage() {
 
       if (itemErr) throw itemErr;
 
-      if (!itemRows || itemRows.length === 0) {
-        setItems([EMPTY_ITEM(1), EMPTY_ITEM(2)]);
-      } else {
-        setItems(
-          itemRows.map((r, i) => ({
-            id: r.id,
-            bil: r.bil ?? i + 1,
-            aspek: r.aspek || "",
-            sasaran_keberhasilan: r.sasaran_keberhasilan || "",
-            pencapaian_pertama: r.pencapaian_pertama || "",
-            penilaian_pertama: r.penilaian_pertama ?? "",
-            status_sasaran: r.status_sasaran || "",
-            pencapaian_akhir: r.pencapaian_akhir || "",
-            penilaian_akhir: r.penilaian_akhir ?? "",
-            catatan: r.catatan || "",
-          }))
-        );
-      }
-    } catch (e) {
-      console.error(e);
-      setMsg("Ralat init data: " + e.message);
+      setItems(
+        !itemRows || itemRows.length === 0
+          ? [EMPTY_ITEM(1), EMPTY_ITEM(2)]
+          : itemRows.map((row, index) => ({
+              id: row.id,
+              bil: row.bil ?? index + 1,
+              aspek: row.aspek || "",
+              sasaran_keberhasilan: row.sasaran_keberhasilan || "",
+              pencapaian_pertama: row.pencapaian_pertama || "",
+              penilaian_pertama: row.penilaian_pertama ?? "",
+              status_sasaran: row.status_sasaran || "",
+              pencapaian_akhir: row.pencapaian_akhir || "",
+              penilaian_akhir: row.penilaian_akhir ?? "",
+              catatan: row.catatan || "",
+            }))
+      );
+    } catch (error) {
+      console.error(error);
+      setMsg(`Ralat init data: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -165,15 +166,16 @@ export default function GuruKeberhasilanPage() {
   function removeItem(index) {
     setItems((prev) => {
       if (prev.length <= 1) return prev;
-      const next = prev.filter((_, i) => i !== index);
-      return next.map((it, i) => ({ ...it, bil: i + 1 }));
+      return prev
+        .filter((_, itemIndex) => itemIndex !== index)
+        .map((item, itemIndex) => ({ ...item, bil: itemIndex + 1 }));
     });
   }
 
-  function toNumberOrNull(v) {
-    if (v === "" || v === null || v === undefined) return null;
-    const n = Number(v);
-    return Number.isNaN(n) ? null : n;
+  function toNumberOrNull(value) {
+    if (value === "" || value === null || value === undefined) return null;
+    const number = Number(value);
+    return Number.isNaN(number) ? null : number;
   }
 
   async function upsertItems(currentFormId) {
@@ -184,23 +186,21 @@ export default function GuruKeberhasilanPage() {
 
     if (fetchErr) throw fetchErr;
 
-    const existingIds = (existingRows || []).map((r) => r.id);
-    const currentIds = items.filter((i) => i.id).map((i) => i.id);
+    const existingIds = (existingRows || []).map((row) => row.id);
+    const currentIds = items.filter((item) => item.id).map((item) => item.id);
     const deletedIds = existingIds.filter((id) => !currentIds.includes(id));
 
     if (deletedIds.length > 0) {
-      const { error: delErr } = await supabase
-        .from("keberhasilan_items")
-        .delete()
-        .in("id", deletedIds);
-      if (delErr) throw delErr;
+      const { error: deleteErr } = await supabase.from("keberhasilan_items").delete().in("id", deletedIds);
+      if (deleteErr) throw deleteErr;
     }
 
-    for (let i = 0; i < items.length; i++) {
-      const row = items[i];
+    const nextItems = [];
+    for (let index = 0; index < items.length; index += 1) {
+      const row = items[index];
       const payload = {
         form_id: currentFormId,
-        bil: toNumberOrNull(row.bil) ?? i + 1,
+        bil: toNumberOrNull(row.bil) ?? index + 1,
         aspek: row.aspek,
         sasaran_keberhasilan: row.sasaran_keberhasilan,
         pencapaian_pertama: row.pencapaian_pertama,
@@ -212,11 +212,9 @@ export default function GuruKeberhasilanPage() {
       };
 
       if (row.id) {
-        const { error } = await supabase
-          .from("keberhasilan_items")
-          .update(payload)
-          .eq("id", row.id);
+        const { error } = await supabase.from("keberhasilan_items").update(payload).eq("id", row.id);
         if (error) throw error;
+        nextItems.push({ ...row, bil: payload.bil });
       } else {
         const { data, error } = await supabase
           .from("keberhasilan_items")
@@ -224,40 +222,41 @@ export default function GuruKeberhasilanPage() {
           .select()
           .single();
         if (error) throw error;
-        items[i].id = data.id;
+        nextItems.push({ ...row, id: data.id, bil: payload.bil });
       }
     }
+
+    setItems(nextItems);
+  }
+
+  async function simpanDraftSilently(nextStatus = STATUS.DRAFT) {
+    const { error: formErr } = await supabase
+      .from("keberhasilan_forms")
+      .update({
+        nama_pyd: maklumat.nama_pyd,
+        no_kp: maklumat.no_kp,
+        jawatan: maklumat.jawatan,
+        gred: maklumat.gred,
+        tempat_bertugas: maklumat.tempat_bertugas,
+        status: nextStatus,
+      })
+      .eq("id", formId);
+
+    if (formErr) throw formErr;
+    await upsertItems(formId);
   }
 
   async function simpanDraft() {
     if (!formId || saving) return;
-
     try {
       setSaving(true);
       setMsg("");
-
-      const { error: formErr } = await supabase
-        .from("keberhasilan_forms")
-        .update({
-          nama_pyd: maklumat.nama_pyd,
-          no_kp: maklumat.no_kp,
-          jawatan: maklumat.jawatan,
-          gred: maklumat.gred,
-          tempat_bertugas: maklumat.tempat_bertugas,
-          status: STATUS.DRAFT,
-        })
-        .eq("id", formId);
-
-      if (formErr) throw formErr;
-
-      await upsertItems(formId);
-
+      await simpanDraftSilently(STATUS.DRAFT);
       setStatus(STATUS.DRAFT);
-      setMsg("Draft berjaya disimpan ✅");
-      setItems((prev) => [...prev]);
-    } catch (e) {
-      console.error(e);
-      setMsg("Ralat simpan draft: " + e.message);
+      setMsg("Draft berjaya disimpan.");
+    } catch (error) {
+      console.error(error);
+      setMsg(`Ralat simpan draft: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -269,8 +268,7 @@ export default function GuruKeberhasilanPage() {
     try {
       setSaving(true);
       setMsg("");
-
-      await simpanDraftSilently();
+      await simpanDraftSilently(STATUS.DRAFT);
 
       const today = new Date().toISOString().slice(0, 10);
       const { error } = await supabase
@@ -286,10 +284,10 @@ export default function GuruKeberhasilanPage() {
 
       setStatus(STATUS.DIHANTAR_1);
       setTarikhPenetapan((prev) => prev || today);
-      setMsg("Berjaya dihantar untuk Penilaian Pertama ✅");
-    } catch (e) {
-      console.error(e);
-      setMsg("Ralat hantar penilaian pertama: " + e.message);
+      setMsg("Berjaya dihantar untuk penilaian pertama.");
+    } catch (error) {
+      console.error(error);
+      setMsg(`Ralat hantar penilaian pertama: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -299,15 +297,14 @@ export default function GuruKeberhasilanPage() {
     if (!formId || saving) return;
 
     if (status !== STATUS.DINILAI_1 && status !== STATUS.DIHANTAR_2) {
-      setMsg("Penilaian akhir hanya boleh dihantar selepas dinilai_1.");
+      setMsg("Penilaian akhir hanya boleh dihantar selepas penilaian pertama disemak.");
       return;
     }
 
     try {
       setSaving(true);
       setMsg("");
-
-      await simpanDraftSilently();
+      await simpanDraftSilently(status);
 
       const today = new Date().toISOString().slice(0, 10);
       const { error } = await supabase
@@ -323,37 +320,22 @@ export default function GuruKeberhasilanPage() {
 
       setStatus(STATUS.DIHANTAR_2);
       setTarikhPenilaian1((prev) => prev || today);
-      setMsg("Berjaya dihantar untuk Penilaian Akhir ✅");
-    } catch (e) {
-      console.error(e);
-      setMsg("Ralat hantar penilaian akhir: " + e.message);
+      setMsg("Berjaya dihantar untuk penilaian akhir.");
+    } catch (error) {
+      console.error(error);
+      setMsg(`Ralat hantar penilaian akhir: ${error.message}`);
     } finally {
       setSaving(false);
     }
   }
 
-  async function simpanDraftSilently() {
-    const { error: formErr } = await supabase
-      .from("keberhasilan_forms")
-      .update({
-        nama_pyd: maklumat.nama_pyd,
-        no_kp: maklumat.no_kp,
-        jawatan: maklumat.jawatan,
-        gred: maklumat.gred,
-        tempat_bertugas: maklumat.tempat_bertugas,
-      })
-      .eq("id", formId);
-
-    if (formErr) throw formErr;
-    await upsertItems(formId);
-  }
-
   const readOnlyP1 = status !== STATUS.DRAFT;
   const readOnlyAkhir = status !== STATUS.DINILAI_1 && status !== STATUS.DIHANTAR_2;
+  const printBasePath = location.pathname.startsWith("/admin") ? "/admin" : "/guru";
 
   const ringkasan = useMemo(() => {
-    const jumlahP1 = items.reduce((acc, r) => acc + (Number(r.penilaian_pertama) || 0), 0);
-    const jumlahP2 = items.reduce((acc, r) => acc + (Number(r.penilaian_akhir) || 0), 0);
+    const jumlahP1 = items.reduce((acc, row) => acc + (Number(row.penilaian_pertama) || 0), 0);
+    const jumlahP2 = items.reduce((acc, row) => acc + (Number(row.penilaian_akhir) || 0), 0);
     const bilItem = items.length || 1;
 
     return {
@@ -365,58 +347,57 @@ export default function GuruKeberhasilanPage() {
     };
   }, [items]);
 
-  function badgeColor(s) {
-    if (s === STATUS.DRAFT) return "#6b7280";
-    if (s === STATUS.DIHANTAR_1) return "#2563eb";
-    if (s === STATUS.DINILAI_1) return "#16a34a";
-    if (s === STATUS.DIHANTAR_2) return "#7c3aed";
-    if (s === STATUS.DINILAI_2) return "#059669";
-    return "#6b7280";
-  }
-
-  if (loading) return <div style={{ padding: 20 }}>Memuatkan...</div>;
+  if (loading) return <div className="loading">Memuatkan borang keberhasilan...</div>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ marginBottom: 10 }}>Borang Keberhasilan Guru</h1>
+    <div style={{ display: "grid", gap: 16 }}>
+      <section style={sectionStyle}>
+        <h2 style={{ marginTop: 0 }}>Borang Keberhasilan</h2>
+        <p style={{ margin: "4px 0" }}>
+          <b>Pengguna:</b> {getUserDisplayName(profile, user)}
+        </p>
+        <p style={{ margin: "4px 0" }}>
+          <b>Tahun:</b> {tahun}
+        </p>
+        <p style={{ margin: "4px 0 0" }}>
+          <b>Status:</b>{" "}
+          <span
+            style={{
+              background: getWorkflowTone(status),
+              color: "white",
+              padding: "3px 10px",
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            {getWorkflowLabel(status)}
+          </span>
+        </p>
+      </section>
 
-      <p style={{ margin: "4px 0" }}>
-        <b>Guru ID:</b> {guruId}
-      </p>
-      <p style={{ margin: "4px 0 14px" }}>
-        <b>Tahun:</b> {tahun} | <b>Status:</b>{" "}
-        <span
-          style={{
-            background: badgeColor(status),
-            color: "white",
-            padding: "3px 10px",
-            borderRadius: 999,
-            fontSize: 12,
-            fontWeight: 700,
-            textTransform: "uppercase",
-          }}
-        >
-          {status}
-        </span>
-      </p>
-
-      <div style={sectionStyle}>
+      <section style={sectionStyle}>
         <h3 style={{ marginTop: 0 }}>Maklumat PYD</h3>
+        <p style={{ color: "#64748b", marginTop: 0 }}>
+          Maklumat ini boleh dikemas kini di halaman Profil Guru dan diselaraskan pada borang ini.
+        </p>
         <div style={grid2}>
-          <InputField label="Nama PYD" value={maklumat.nama_pyd} onChange={(v) => updateMaklumat("nama_pyd", v)} disabled={status !== STATUS.DRAFT} />
-          <InputField label="Gred" value={maklumat.gred} onChange={(v) => updateMaklumat("gred", v)} disabled={status !== STATUS.DRAFT} />
-          <InputField label="No. K.P." value={maklumat.no_kp} onChange={(v) => updateMaklumat("no_kp", v)} disabled={status !== STATUS.DRAFT} />
-          <InputField label="Tempat Bertugas" value={maklumat.tempat_bertugas} onChange={(v) => updateMaklumat("tempat_bertugas", v)} disabled={status !== STATUS.DRAFT} />
+          <InputField label="Nama PYD" value={maklumat.nama_pyd} onChange={(value) => updateMaklumat("nama_pyd", value)} disabled={status !== STATUS.DRAFT} />
+          <InputField label="Gred" value={maklumat.gred} onChange={(value) => updateMaklumat("gred", value)} disabled={status !== STATUS.DRAFT} />
+          <InputField label="No. K.P." value={maklumat.no_kp} onChange={(value) => updateMaklumat("no_kp", value)} disabled={status !== STATUS.DRAFT} />
+          <InputField label="Tempat Bertugas / Opsyen" value={maklumat.tempat_bertugas} onChange={(value) => updateMaklumat("tempat_bertugas", value)} disabled={status !== STATUS.DRAFT} />
           <div style={{ gridColumn: "1 / span 2" }}>
-            <InputField label="Jawatan" value={maklumat.jawatan} onChange={(v) => updateMaklumat("jawatan", v)} disabled={status !== STATUS.DRAFT} />
+            <InputField label="Jawatan" value={maklumat.jawatan} onChange={(value) => updateMaklumat("jawatan", value)} disabled={status !== STATUS.DRAFT} />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div style={sectionStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <section style={sectionStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <h3 style={{ marginTop: 0 }}>Perincian Sasaran Keberhasilan</h3>
-          <button type="button" onClick={addItem} disabled={status !== STATUS.DRAFT}>+ Tambah Item</button>
+          <button type="button" className="refresh-btn" onClick={addItem} disabled={status !== STATUS.DRAFT}>
+            + Tambah Item
+          </button>
         </div>
 
         <div style={{ overflowX: "auto" }}>
@@ -448,54 +429,55 @@ export default function GuruKeberhasilanPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((it, i) => (
-                <tr key={it.id || `row-${i}`}>
+              {items.map((item, index) => (
+                <tr key={item.id || `row-${index}`}>
                   <td style={tdStyle}>
-                    <input type="number" style={{ ...inputCellSm, textAlign: "center" }} value={it.bil ?? i + 1} onChange={(e) => updateItem(i, "bil", e.target.value)} disabled={status !== STATUS.DRAFT} />
+                    <input type="number" style={{ ...inputCellSm, textAlign: "center" }} value={item.bil ?? index + 1} onChange={(event) => updateItem(index, "bil", event.target.value)} disabled={status !== STATUS.DRAFT} />
                   </td>
                   <td style={tdStyle}>
-                    <textarea style={textCell} value={it.aspek || ""} onChange={(e) => updateItem(i, "aspek", e.target.value)} disabled={readOnlyP1} />
+                    <textarea style={textCell} value={item.aspek || ""} onChange={(event) => updateItem(index, "aspek", event.target.value)} disabled={readOnlyP1} />
                   </td>
                   <td style={tdStyle}>
-                    <textarea style={textCell} value={it.sasaran_keberhasilan || ""} onChange={(e) => updateItem(i, "sasaran_keberhasilan", e.target.value)} disabled={readOnlyP1} />
+                    <textarea style={textCell} value={item.sasaran_keberhasilan || ""} onChange={(event) => updateItem(index, "sasaran_keberhasilan", event.target.value)} disabled={readOnlyP1} />
                   </td>
                   <td style={tdStyle}>
-                    <textarea style={textCell} value={it.pencapaian_pertama || ""} onChange={(e) => updateItem(i, "pencapaian_pertama", e.target.value)} disabled={readOnlyP1} />
+                    <textarea style={textCell} value={item.pencapaian_pertama || ""} onChange={(event) => updateItem(index, "pencapaian_pertama", event.target.value)} disabled={readOnlyP1} />
                   </td>
                   <td style={tdStyle}>
-                    <input type="number" step="0.01" style={inputCellSm} value={it.penilaian_pertama ?? ""} onChange={(e) => updateItem(i, "penilaian_pertama", e.target.value)} disabled={readOnlyP1} />
+                    <input type="number" step="0.01" style={inputCellSm} value={item.penilaian_pertama ?? ""} onChange={(event) => updateItem(index, "penilaian_pertama", event.target.value)} disabled={readOnlyP1} />
                   </td>
                   <td style={tdStyle}>
-                    <select style={inputCell} value={it.status_sasaran || ""} onChange={(e) => updateItem(i, "status_sasaran", e.target.value)} disabled={readOnlyP1}>
+                    <select style={inputCell} value={item.status_sasaran || ""} onChange={(event) => updateItem(index, "status_sasaran", event.target.value)} disabled={readOnlyP1}>
                       <option value="">-- Pilih --</option>
-                      {STATUS_SASARAN_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                      {STATUS_SASARAN_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
                     </select>
                   </td>
                   <td style={tdStyle}>
-                    <textarea style={textCell} value={it.pencapaian_akhir || ""} onChange={(e) => updateItem(i, "pencapaian_akhir", e.target.value)} disabled={readOnlyAkhir} />
+                    <textarea style={textCell} value={item.pencapaian_akhir || ""} onChange={(event) => updateItem(index, "pencapaian_akhir", event.target.value)} disabled={readOnlyAkhir} />
                   </td>
                   <td style={tdStyle}>
-                    <input type="number" step="0.01" style={inputCellSm} value={it.penilaian_akhir ?? ""} onChange={(e) => updateItem(i, "penilaian_akhir", e.target.value)} disabled={readOnlyAkhir} />
+                    <input type="number" step="0.01" style={inputCellSm} value={item.penilaian_akhir ?? ""} onChange={(event) => updateItem(index, "penilaian_akhir", event.target.value)} disabled={readOnlyAkhir} />
                   </td>
                   <td style={tdStyle}>
-                    <textarea style={textCell} value={it.catatan || ""} onChange={(e) => updateItem(i, "catatan", e.target.value)} disabled={readOnlyAkhir} />
+                    <textarea style={textCell} value={item.catatan || ""} onChange={(event) => updateItem(index, "catatan", event.target.value)} disabled={readOnlyAkhir} />
                   </td>
                   <td style={tdStyle}>
-                    <button type="button" onClick={() => removeItem(i)} disabled={status !== STATUS.DRAFT}>Buang</button>
+                    <button type="button" className="refresh-btn" onClick={() => removeItem(index)} disabled={status !== STATUS.DRAFT}>
+                      Buang
+                    </button>
                   </td>
                 </tr>
               ))}
-              {items.length === 0 && (
-                <tr>
-                  <td style={tdStyle} colSpan={10}>Tiada item.</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <div style={sectionStyle}>
+      <section style={sectionStyle}>
         <h3 style={{ marginTop: 0 }}>Ringkasan</h3>
         <div style={summaryGrid}>
           <SummaryBox label="Bil Item" value={ringkasan.bilItem} />
@@ -510,42 +492,39 @@ export default function GuruKeberhasilanPage() {
           <div>Tarikh Penilaian Pertama: {tarikhPenilaian1 || "-"}</div>
           <div>Tarikh Penilaian Akhir: {tarikhPenilaian2 || "-"}</div>
         </div>
-      </div>
+      </section>
 
       <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button onClick={simpanDraft} disabled={saving}>
+        <button className="refresh-btn" onClick={simpanDraft} disabled={saving}>
           {saving ? "Menyimpan..." : "Simpan Draft"}
         </button>
 
         {status === STATUS.DRAFT && (
-          <button onClick={hantarPenilaian1} disabled={saving}>
+          <button className="refresh-btn" onClick={hantarPenilaian1} disabled={saving}>
             Hantar Penilaian Pertama
           </button>
         )}
 
         {(status === STATUS.DINILAI_1 || status === STATUS.DIHANTAR_2) && (
-          <button onClick={hantarPenilaianAkhir} disabled={saving}>
+          <button className="refresh-btn" onClick={hantarPenilaianAkhir} disabled={saving}>
             Hantar Penilaian Akhir
           </button>
         )}
 
-<button
-  onClick={() => {
-    const url = `/guru/keberhasilan/print/${formId}`;
-    const w = window.open(url, "_blank", "noopener,noreferrer");
-    if (!w) {
-      window.location.href = url; // fallback kalau popup block
-    }
-  }}
-  disabled={!formId}
->
-  Download Borang
-</button>
-
-        <button onClick={() => window.print()}>Cetak (Page Semasa)</button>
+        <button
+          className="refresh-btn"
+          onClick={() => {
+            const url = `${printBasePath}/keberhasilan/print/${formId}`;
+            const popup = window.open(url, "_blank", "noopener,noreferrer");
+            if (!popup) window.location.href = url;
+          }}
+          disabled={!formId}
+        >
+          Download Borang
+        </button>
       </div>
 
-      {msg && <p style={{ marginTop: 12 }}>{msg}</p>}
+      {msg && <div className="dashboard-inline-alert">{msg}</div>}
     </div>
   );
 }
@@ -554,7 +533,7 @@ function InputField({ label, value, onChange, disabled }) {
   return (
     <label style={{ display: "block" }}>
       <div style={{ marginBottom: 6, fontWeight: 600 }}>{label}</div>
-      <input style={inputCell} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+      <input style={inputCell} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} />
     </label>
   );
 }
@@ -573,7 +552,6 @@ const sectionStyle = {
   border: "1px solid #d1d5db",
   borderRadius: 10,
   padding: 12,
-  marginBottom: 12,
 };
 
 const grid2 = {
@@ -617,13 +595,7 @@ const inputCell = {
 };
 
 const inputCellSm = {
-  width: "100%",
-  height: 36,
-  padding: "6px 8px",
-  borderRadius: 6,
-  border: "1px solid #cbd5e1",
-  boxSizing: "border-box",
-  fontSize: 13,
+  ...inputCell,
 };
 
 const textCell = {
