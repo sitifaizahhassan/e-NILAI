@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#1d4ed8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="circleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.25" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.15" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+    </linearGradient>
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(0,0,0,0.3)" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="540" fill="url(#bgGrad)" />
+
+  <!-- Decorative background circles -->
+  <circle cx="820" cy="80" r="160" fill="white" opacity="0.04" />
+  <circle cx="820" cy="80" r="110" fill="white" opacity="0.05" />
+  <circle cx="140" cy="440" r="200" fill="white" opacity="0.04" />
+  <circle cx="140" cy="440" r="130" fill="white" opacity="0.05" />
+  <circle cx="880" cy="460" r="100" fill="white" opacity="0.03" />
+
+  <!-- Top-right decorative dots grid -->
+  <g opacity="0.15">
+    <circle cx="780" cy="40" r="3" fill="white" />
+    <circle cx="800" cy="40" r="3" fill="white" />
+    <circle cx="820" cy="40" r="3" fill="white" />
+    <circle cx="840" cy="40" r="3" fill="white" />
+    <circle cx="860" cy="40" r="3" fill="white" />
+    <circle cx="780" cy="60" r="3" fill="white" />
+    <circle cx="800" cy="60" r="3" fill="white" />
+    <circle cx="820" cy="60" r="3" fill="white" />
+    <circle cx="840" cy="60" r="3" fill="white" />
+    <circle cx="860" cy="60" r="3" fill="white" />
+    <circle cx="780" cy="80" r="3" fill="white" />
+    <circle cx="800" cy="80" r="3" fill="white" />
+    <circle cx="820" cy="80" r="3" fill="white" />
+    <circle cx="840" cy="80" r="3" fill="white" />
+    <circle cx="860" cy="80" r="3" fill="white" />
+  </g>
+
+  <!-- Classroom illustration area (right side) -->
+  <!-- Classroom/school building background shape -->
+  <rect x="560" y="100" width="340" height="340" rx="20" fill="white" opacity="0.08" />
+
+  <!-- Whiteboard on wall -->
+  <rect x="580" y="130" width="200" height="120" rx="8" fill="white" opacity="0.18" />
+  <rect x="586" y="136" width="188" height="108" rx="6" fill="#e8f0fe" opacity="0.5" />
+  <!-- Whiteboard content lines -->
+  <line x1="600" y1="155" x2="750" y2="155" stroke="#1d4ed8" stroke-width="2" opacity="0.7" />
+  <line x1="600" y1="170" x2="730" y2="170" stroke="#1d4ed8" stroke-width="2" opacity="0.5" />
+  <line x1="600" y1="185" x2="740" y2="185" stroke="#1d4ed8" stroke-width="2" opacity="0.5" />
+  <line x1="600" y1="200" x2="720" y2="200" stroke="#1d4ed8" stroke-width="2" opacity="0.4" />
+  <!-- Whiteboard marker tray -->
+  <rect x="586" y="240" width="188" height="6" rx="3" fill="white" opacity="0.3" />
+
+  <!-- Teacher figure (left of whiteboard) -->
+  <!-- Teacher body -->
+  <rect x="792" y="190" width="28" height="50" rx="6" fill="#93c5fd" opacity="0.8" />
+  <!-- Teacher head -->
+  <circle cx="806" cy="180" r="14" fill="#fbbf24" opacity="0.9" />
+  <!-- Teacher hair -->
+  <path d="M792 175 Q806 165 820 175" fill="#78350f" opacity="0.8" />
+  <!-- Teacher arm pointing at board -->
+  <line x1="792" y1="210" x2="770" y2="200" stroke="#fbbf24" stroke-width="5" stroke-linecap="round" opacity="0.8" />
+
+  <!-- Student desks row 1 -->
+  <rect x="590" y="280" width="50" height="30" rx="4" fill="white" opacity="0.2" />
+  <rect x="660" y="280" width="50" height="30" rx="4" fill="white" opacity="0.2" />
+  <rect x="730" y="280" width="50" height="30" rx="4" fill="white" opacity="0.2" />
+  <!-- Student figures row 1 -->
+  <circle cx="615" cy="270" r="10" fill="#fbbf24" opacity="0.75" />
+  <rect x="607" y="280" width="16" height="24" rx="4" fill="#60a5fa" opacity="0.75" />
+  <circle cx="685" cy="270" r="10" fill="#fbbf24" opacity="0.75" />
+  <rect x="677" y="280" width="16" height="24" rx="4" fill="#34d399" opacity="0.75" />
+  <circle cx="755" cy="270" r="10" fill="#fbbf24" opacity="0.75" />
+  <rect x="747" y="280" width="16" height="24" rx="4" fill="#f87171" opacity="0.75" />
+
+  <!-- Student desks row 2 -->
+  <rect x="590" y="340" width="50" height="30" rx="4" fill="white" opacity="0.15" />
+  <rect x="660" y="340" width="50" height="30" rx="4" fill="white" opacity="0.15" />
+  <rect x="730" y="340" width="50" height="30" rx="4" fill="white" opacity="0.15" />
+  <!-- Student figures row 2 -->
+  <circle cx="615" cy="330" r="10" fill="#fbbf24" opacity="0.65" />
+  <rect x="607" y="340" width="16" height="24" rx="4" fill="#a78bfa" opacity="0.65" />
+  <circle cx="685" cy="330" r="10" fill="#fbbf24" opacity="0.65" />
+  <rect x="677" y="340" width="16" height="24" rx="4" fill="#fb923c" opacity="0.65" />
+  <circle cx="755" cy="330" r="10" fill="#fbbf24" opacity="0.65" />
+  <rect x="747" y="340" width="16" height="24" rx="4" fill="#60a5fa" opacity="0.65" />
+
+  <!-- Floor line -->
+  <rect x="560" y="398" width="340" height="4" rx="2" fill="white" opacity="0.1" />
+
+  <!-- Main central content -->
+  <!-- Large blue circle icon (main focal point) -->
+  <circle cx="300" cy="240" r="120" fill="url(#circleGrad)" stroke="white" stroke-width="2" stroke-opacity="0.3" />
+  <circle cx="300" cy="240" r="95" fill="white" opacity="0.12" />
+
+  <!-- Assessment/Star icon inside circle -->
+  <!-- Checkmark/clipboard icon -->
+  <g transform="translate(260, 195)" filter="url(#shadow)">
+    <!-- Clipboard body -->
+    <rect x="5" y="10" width="62" height="78" rx="6" fill="white" opacity="0.9" />
+    <!-- Clipboard top -->
+    <rect x="18" y="4" width="36" height="16" rx="4" fill="white" opacity="0.9" />
+    <rect x="22" y="6" width="28" height="12" rx="3" fill="#1d4ed8" opacity="0.6" />
+    <!-- Check lines on clipboard -->
+    <line x1="16" y1="35" x2="55" y2="35" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+    <line x1="16" y1="48" x2="55" y2="48" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+    <line x1="16" y1="61" x2="42" y2="61" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+    <!-- Checkmark -->
+    <path d="M14 72 L22 82 L38 66" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <!-- Star rating -->
+    <text x="46" y="82" font-size="14" fill="#fbbf24" opacity="0.9">★</text>
+  </g>
+
+  <!-- e-NILAI main text -->
+  <text x="300" y="410" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="68" font-weight="800" fill="white" letter-spacing="-1" filter="url(#shadow)">e-NILAI</text>
+
+  <!-- Subtitle text -->
+  <text x="300" y="450" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="20" font-weight="400" fill="white" opacity="0.9" letter-spacing="1">Sistem Penilaian Guru Bersepadu</text>
+
+  <!-- Horizontal divider line -->
+  <rect x="180" y="465" width="240" height="2" rx="1" fill="white" opacity="0.3" />
+
+  <!-- Ministry/school badge area -->
+  <g opacity="0.7">
+    <circle cx="260" cy="490" r="12" fill="white" opacity="0.15" />
+    <text x="260" y="494" text-anchor="middle" font-family="Arial" font-size="12" fill="white">🏫</text>
+    <text x="290" y="494" font-family="'Segoe UI', Arial, sans-serif" font-size="13" fill="white" opacity="0.85">Kementerian Pendidikan Malaysia</text>
+  </g>
+
+  <!-- Bottom decorative wave -->
+  <path d="M0 510 Q240 490 480 510 Q720 530 960 510 L960 540 L0 540 Z" fill="white" opacity="0.06" />
+  <path d="M0 525 Q240 505 480 520 Q720 535 960 520 L960 540 L0 540 Z" fill="white" opacity="0.04" />
+</svg>
