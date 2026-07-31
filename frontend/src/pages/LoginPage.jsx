@@ -79,8 +79,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (profile.role === "admin") navigate("/admin");
-    else navigate("/guru");
+    navigate("/guru");
 
     setLoading(false);
   };
