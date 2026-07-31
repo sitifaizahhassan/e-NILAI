@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import bannerSvg from "../assets/banner.svg";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export default function LoginPage() {
       {/* Hero/Banner side */}
       <div style={styles.banner}>
         <img
-          src="/assets/banner.svg"
+          src={bannerSvg}
           alt="e-NILAI – Sistem Penilaian Guru Bersepadu"
           style={styles.bannerImg}
         />
