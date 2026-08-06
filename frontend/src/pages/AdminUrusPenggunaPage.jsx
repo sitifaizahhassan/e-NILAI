@@ -24,7 +24,7 @@ export default function AdminUrusPenggunaPage() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, nama, email, jawatan, role")
+        .select("id, nama, jawatan, role")
         .order("nama", { ascending: true });
       if (error) throw error;
       setUsers(data || []);
@@ -96,7 +96,6 @@ export default function AdminUrusPenggunaPage() {
           <thead>
             <tr style={s.thead}>
               <th style={s.th}>Nama</th>
-              <th style={s.th}>Email</th>
               <th style={s.th}>Jawatan</th>
               <th style={s.th}>Peranan Semasa</th>
               <th style={s.th}>Tukar Peranan</th>
@@ -105,13 +104,12 @@ export default function AdminUrusPenggunaPage() {
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td colSpan={5} style={s.emptyCell}>Tiada pengguna dijumpai.</td>
+                <td colSpan={4} style={s.emptyCell}>Tiada pengguna dijumpai.</td>
               </tr>
             ) : (
               users.map((user) => (
                 <tr key={user.id} style={s.tr}>
                   <td style={s.td}>{user.nama || "—"}</td>
-                  <td style={s.td}>{user.email || "—"}</td>
                   <td style={s.td}>{user.jawatan || "—"}</td>
                   <td style={s.td}>
                     <span style={{ ...s.roleBadge, ...getRoleBadgeStyle(user.role) }}>
