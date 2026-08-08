@@ -31,8 +31,7 @@ const EMPTY_ITEM = (bil = 1) => ({
 });
 
 export default function GuruKeberhasilanPage() {
-  // TODO: ganti dengan auth sebenar
-  const [guruId] = useState("41451b11-c146-4912-9911-685445164c19");
+  const [guruId, setGuruId] = useState(null);
   const [uploadingIndex, setUploadingIndex] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -58,18 +57,28 @@ export default function GuruKeberhasilanPage() {
   const [tarikhPenilaian2, setTarikhPenilaian2] = useState(null);
 
   useEffect(() => {
-    initData();
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const uid = data?.user?.id || null;
+      if (!uid) {
+        setMsg("Ralat: sila log masuk semula.");
+        setLoading(false);
+        return;
+      }
+      setGuruId(uid);
+      initData(uid);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function initData() {
+  async function initData(uid) {
     setLoading(true);
     setMsg("");
     try {
       const { data: existing, error: findErr } = await supabase
         .from("keberhasilan_forms")
         .select("*")
-        .eq("guru_id", guruId)
+        .eq("guru_id", uid)
         .eq("tahun", tahun)
         .maybeSingle();
 
@@ -82,7 +91,7 @@ export default function GuruKeberhasilanPage() {
         const { data: created, error: createErr } = await supabase
           .from("keberhasilan_forms")
           .insert({
-            guru_id: guruId,
+            guru_id: uid,
             tahun,
             status: STATUS.DRAFT,
             tarikh_penetapan: today,
@@ -474,9 +483,6 @@ export default function GuruKeberhasilanPage() {
     <div style={{ padding: 20 }}>
       <h1 style={{ marginBottom: 10 }}>Borang Keberhasilan Guru</h1>
 
-      <p style={{ margin: "4px 0" }}>
-        <b>Guru ID:</b> {guruId}
-      </p>
       <p style={{ margin: "4px 0 14px" }}>
         <b>Tahun:</b> {tahun} | <b>Status:</b>{" "}
         <span
