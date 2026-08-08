@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import * as XLSX from "xlsx";
 
 const STATUS = {
   DRAFT: "draft",
@@ -438,6 +439,92 @@ export default function GuruKeberhasilanPage() {
     }
   }
 
+  // ============ DOWNLOAD PDF ============
+  async function handleDownloadPdf() {
+    if (!formId) return;
+    try {
+      // Simpan draft dulu supaya PDF papar data terkini
+      await simpanDraftSilently();
+    } catch (e) {
+      // teruskan walaupun simpan gagal
+      console.error(e);
+    }
+    window.open(`/admin/keberhasilan/print/${formId}`, "_blank");
+  }
+
+  // ============ DOWNLOAD EXCEL ============
+  async function handleDownloadExcel() {
+    if (!formId) return;
+    try {
+      // Simpan draft dulu supaya Excel papar data terkini
+      try {
+        await simpanDraftSilently();
+      } catch (e) {
+        console.error(e);
+      }
+
+      const res = await fetch("/templates/BORANG_KEBERHASILAN_TEMPLATE.xlsx");
+      if (!res.ok) {
+        setMsg("Template Excel tak jumpa. Semak public/templates/BORANG_KEBERHASILAN_TEMPLATE.xlsx");
+        return;
+      }
+
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets["BORANG KEBERHASILAN"] || wb.Sheets[wb.SheetNames[0]];
+      if (!ws) {
+        setMsg("Sheet template tidak dijumpai.");
+        return;
+      }
+
+      // Header
+      ws["B5"] = { t: "s", v: maklumat.nama_pyd || "-" };
+      ws["B6"] = { t: "s", v: maklumat.no_kp || "-" };
+      ws["B7"] = { t: "s", v: maklumat.jawatan || "-" };
+      ws["H5"] = { t: "s", v: maklumat.gred || "-" };
+      ws["H6"] = { t: "s", v: maklumat.tempat_bertugas || "-" };
+
+      // Jadual item
+      const startRow = 9;
+      const maxRows = Math.max(6, items.length);
+      for (let i = 0; i < maxRows; i++) {
+        const row = startRow + i;
+        const r = items[i] || {};
+        ws[`A${row}`] = { t: "s", v: r.aspek || "" };
+        ws[`B${row}`] = { t: "n", v: Number(r.bil ?? (r.aspek || r.sasaran_keberhasilan ? i + 1 : "")) || "" };
+        ws[`C${row}`] = { t: "s", v: r.sasaran_keberhasilan || "" };
+        ws[`D${row}`] = { t: "s", v: r.pencapaian_pertama || "" };
+        ws[`E${row}`] = { t: "n", v: toNumOrBlank(r.penilaian_pertama) };
+        ws[`F${row}`] = { t: "s", v: r.status_sasaran || "" };
+        ws[`G${row}`] = { t: "s", v: r.pencapaian_akhir || "" };
+        ws[`H${row}`] = { t: "n", v: toNumOrBlank(r.penilaian_akhir) };
+        ws[`I${row}`] = { t: "s", v: r.catatan || "" };
+      }
+
+      // Ringkasan
+      const count = items.length;
+      const totalP1 = items.reduce((a, r) => a + (Number(r.penilaian_pertama) || 0), 0);
+      const totalP2 = items.reduce((a, r) => a + (Number(r.penilaian_akhir) || 0), 0);
+      const avgP1 = count ? totalP1 / count : 0;
+      const avgP2 = count ? totalP2 / count : 0;
+
+      ws["G15"] = { t: "n", v: count || 0 };
+      ws["H15"] = { t: "n", v: count || 0 };
+      ws["G16"] = { t: "n", v: round2(totalP1) };
+      ws["H16"] = { t: "n", v: round2(totalP2) };
+      ws["G17"] = { t: "n", v: round2(avgP1) };
+      ws["H17"] = { t: "n", v: round2(avgP2) };
+
+      const safeNama = String(maklumat.nama_pyd || "PYD").replace(/[^\w\- ]/g, "");
+      const fileName = `BORANG_KEBERHASILAN_${safeNama}_${tahun}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      setMsg("Excel berjaya dimuat turun ✅");
+    } catch (err) {
+      console.error(err);
+      setMsg("Ralat export Excel: " + (err?.message || "Unknown error"));
+    }
+  }
+
   const allEvidensUploaded = items.length > 0 && items.every((it) => !!it.evidens_url);
 
   const penilaianPertamaBelumDihantar = status === STATUS.DRAFT;
@@ -677,6 +764,25 @@ export default function GuruKeberhasilanPage() {
         >
           Hantar Penilaian Kedua
         </button>
+
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={!formId || saving}
+          style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 6, padding: "8px 14px", fontWeight: 600, cursor: "pointer" }}
+        >
+          📄 Muat Turun PDF
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDownloadExcel}
+          disabled={!formId || saving}
+          style={{ background: "#0f766e", color: "#fff", border: "none", borderRadius: 6, padding: "8px 14px", fontWeight: 600, cursor: "pointer" }}
+        >
+          📊 Muat Turun Excel
+        </button>
+
         {msgButangKedua && (
           <span style={{ alignSelf: "center", fontSize: 12, color: "#dc2626" }}>
             {msgButangKedua}
@@ -706,6 +812,17 @@ function SummaryBox({ label, value }) {
       <div style={{ fontSize: 30, fontWeight: 700 }}>{value}</div>
     </div>
   );
+}
+
+function toNumOrBlank(v) {
+  if (v === "" || v === null || v === undefined) return "";
+  const n = Number(v);
+  return Number.isNaN(n) ? "" : n;
+}
+
+function round2(v) {
+  const n = Number(v || 0);
+  return Math.round(n * 100) / 100;
 }
 
 const sectionStyle = {
